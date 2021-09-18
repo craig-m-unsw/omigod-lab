@@ -1,0 +1,113 @@
+---
+- name: setup Ubuntu 2004 VM for CVE-2021-38647 testing
+  hosts: all
+  gather_facts: yes
+  vars:
+    package_install: [
+      { add_item: 'curl' },
+      { add_item: 'wget' },
+      { add_item: 'dos2unix' },
+      { add_item: 'lsof' },
+      { add_item: 'tmux' },
+      { add_item: 'vim' },
+      { add_item: 'git' },
+      { add_item: 'make' },
+      { add_item: 'python3.8-venv' },
+      { add_item: 'tcpdump' },
+      { add_item: 'socat' },
+      { add_item: 'auditd' },
+      { add_item: 'ccze' },
+      { add_item: 'multitail' },
+      { add_item: 'net-tools' }
+    ]
+    package_remove: [
+      { del_item: 'telnet' }
+    ]
+    create_folders: [
+      { dir: '/etc/ansible/facts.d/', mode: '0755', owner: 'root', group: 'root' },
+      { dir: '/home/vagrant/Downloads/', mode: '0755', owner: 'vagrant', group: 'vagrant' },
+      { dir: '/home/vagrant/source/', mode: '0755', owner: 'vagrant', group: 'vagrant' },
+      { dir: '/root/docs/', mode: '0755', owner: 'root', group: 'root' },
+      { dir: '/mnt/sshfs/', mode: '0775', owner: 'root', group: 'root' }
+    ]
+
+  tasks:
+
+    - name: system setup
+      block:
+        - name: test
+          ansible.builtin.copy:
+            dest: "/root/ctf.txt"
+            mode: 0600
+            owner:  "root"
+            group:  "root"
+            content: |
+              # -- ansible manged file --
+              A secret file.
+          become: true
+        - name: create common folders
+          ansible.builtin.file:
+            path: "{{ item.dir }}"
+            state: directory
+            mode: "{{ item.mode }}"
+            owner: "{{ item.owner }}"
+            group: "{{ item.group }}"
+          become: true
+          with_items: "{{ create_folders }}"
+        - name: packages
+          block:
+            - name: install packages
+              ansible.builtin.package:
+                name: "{{ item.add_item }}"
+                state: present
+              retries: 3
+              with_items: "{{ package_install }}"
+            - name: remove packages
+              ansible.builtin.package:
+                name: "{{ item.del_item }}"
+                state: absent
+              with_items: "{{ package_remove }}"
+      become: true
+
+    - name: download known vulnerable source deb
+      block:
+        - name: get omi
+          get_url:
+            url: https://github.com/microsoft/omi/releases/download/v1.6.8-0/omi-1.6.8-0.ssl_110.ulinux.x64.deb
+            dest: /home/vagrant/source/omi-1.6.8-0.ssl_110.ulinux.x64.deb
+            checksum: sha256:2e0813ee3f2a71028f071d9933ca2f336faaaf9b6126d5f1767ffcbc7e803279
+        - name: get scx
+          get_url:
+            url: https://github.com/microsoft/SCXcore/releases/download/v1.6.8-1/scx-1.6.8-1.ssl_110.ulinux.x64.deb
+            dest: /home/vagrant/source/scx-1.6.8-1.ssl_110.ulinux.x64.deb
+            checksum: sha256:1cba16e3b307177cbe15bd3fd8a2a87ab8d638846988202be8a17981b5e900c9
+
+    - name: install software
+      block:
+        - name: install omi
+          apt:
+            deb: /home/vagrant/source/omi-1.6.8-0.ssl_110.ulinux.x64.deb
+          become: true
+        - name: config omi port
+          ansible.builtin.lineinfile:
+            path: /etc/opt/omi/conf/omiserver.conf
+            regexp: '^httpsport=0'
+            line: httpsport=5986
+          become: true
+        - name: install scx
+          apt:
+            deb: /home/vagrant/source/scx-1.6.8-1.ssl_110.ulinux.x64.deb
+          become: true
+
+    - name: start omi daemon
+      block:
+        - name: omi config
+          ansible.builtin.service:
+            name: omid
+            enabled: yes
+            state: reloaded
+          become: true
+
+    - name: done
+      debug:
+        msg: "omi lab playbook finished."
