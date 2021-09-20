@@ -17,6 +17,7 @@
       { add_item: 'socat' },
       { add_item: 'auditd' },
       { add_item: 'ccze' },
+      { add_item: 'yara' },
       { add_item: 'multitail' },
       { add_item: 'net-tools' }
     ]

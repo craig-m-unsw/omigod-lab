@@ -4,7 +4,7 @@ An educational lab VM to learn about the 9.6 CVSS unauthenticated Remote Code Ex
 
 Disclosure (original research): https://www.wiz.io/blog/omigod-critical-vulnerabilities-in-omi-azure
 
-Source code: https://github.com/microsoft/omi
+OMI source code: https://github.com/microsoft/omi
 
 Public exploit code:
 * https://github.com/horizon3ai/CVE-2021-38647
@@ -18,6 +18,8 @@ news:
 Write up:
 * https://censys.io/blog/understanding-the-impact-of-omigod-cve-2021-38647/
 
+Read some of the above before proceeding.
+
 ## Setup
 
 * Install [Vagrant](https://www.vagrantup.com/)
@@ -26,12 +28,12 @@ Write up:
 ```shell
 vagrant up
 vagrant ssh
-pgrep omiserver
+/opt/omi/bin/omicli iv root/scx { SCX_OperatingSystem } ExecuteShellCommand { command 'uptime' timeout 0 }
 ```
 
 This will setup Ubuntu 20.04 (Focal Fossa). Thanks [Roboxes](https://roboxes.org/) for the Vagrant box.
 
-Installed by playbook.yml:
+Installed by `playbook.yml`:
 
 * omi-1.6.8-0.ssl_110.ulinux.x64.deb - `sha256:2e0813ee3f2a71028f071d9933ca2f336faaaf9b6126d5f1767ffcbc7e803279`
 * scx-1.6.8-1.ssl_110.ulinux.x64.deb - `sha256:1cba16e3b307177cbe15bd3fd8a2a87ab8d638846988202be8a17981b5e900c9`
@@ -48,7 +50,7 @@ To run the exploit from your desktop or inside the VM after reading `omigod.py`,
 cd ~/Downloads
 git clone https://github.com/horizon3ai/CVE-2021-38647.git
 cd CVE-2021-38647
-git checkout 2eaf8ab6f1fe8f1691401a3e36da4407997f4cfc
+git checkout 2eaf8ab6f1fe8f1691401a3e36da4407997f4cfc || exit 1
 python3 -m venv omigod-env
 source omigod-env/bin/activate
 python3 -m pip install requests urllib3
@@ -103,3 +105,7 @@ type=PROCTITLE msg=audit(1631977306.937:108): proctitle="whoami"
 ```
 
 Someone has run "whoami".
+
+Microsoft note this in the blog post "Additional Guidance Regarding OMI Vulnerabilities within Azure VM Management Extensions" on detection:
+
+https://msrc-blog.microsoft.com/2021/09/16/additional-guidance-regarding-omi-vulnerabilities-within-azure-vm-management-extensions/
