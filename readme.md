@@ -43,28 +43,24 @@ Thanks to vagrant a port forward on localhost:5986 to 5986 in the VM will be ope
 
 #### CVE-2021-38647
 
-Public exploit code:
-* https://github.com/horizon3ai/CVE-2021-38647
-* https://github.com/Immersive-Labs-Sec/cve-2021-38647
-
-To run the exploit from your desktop or inside the VM after reading `omigod.py`, this is why the git commands checkout a set commit! Do not run unknown random exploit code.
+We just need to send this xml request to a vulnerable OMI server:
 
 ```shell
-cd ~/Downloads
-git clone https://github.com/horizon3ai/CVE-2021-38647.git
-cd CVE-2021-38647
-git checkout 2eaf8ab6f1fe8f1691401a3e36da4407997f4cfc || exit 1
-python3 -m venv omigod-env
-source omigod-env/bin/activate
-python3 -m pip install requests urllib3
-python3 omigod.py -t 127.0.0.1 -c hostname
+cd /vagrant
+. send-payload.sh
 ```
 
-You should see `ubuntu2004.localdomain` as the output the the hostname command.
+You should see the output to `printenv` command in `<p:StdOut>`.
 
-Or if you run `id` you can see `uid=0(root) gid=0(root) groups=0(root)` outputs.
+If you change the command in `payload.xml` to be `id` you can see `uid=0(root) gid=0(root) groups=0(root)` outputs.
 
-😬
+😬😬😬
+
+Other public exploit code:
+
+* https://github.com/AlteredSecurity/CVE-2021-38647
+* https://github.com/horizon3ai/CVE-2021-38647
+* https://github.com/Immersive-Labs-Sec/cve-2021-38647
 
 ## Using omi
 
