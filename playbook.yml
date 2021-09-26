@@ -1,5 +1,5 @@
 ---
-- name: setup Ubuntu 2004 VM for CVE-2021-38647 testing
+- name: "setup Ubuntu 2004 VM for CVE-2021-38647 testing"
   hosts: all
   gather_facts: yes
   vars:
@@ -31,12 +31,21 @@
       { dir: '/root/docs/', mode: '0755', owner: 'root', group: 'root' },
       { dir: '/mnt/sshfs/', mode: '0775', owner: 'root', group: 'root' }
     ]
+    source_dir: "/home/vagrant/source/"
+    # omi version
+    deb_name_omi: "omi-1.6.8-0.ssl_110.ulinux.x64.deb"
+    deb_ver_omi_regx: "[0-9].[0-9].[0-9]-[0-9]"
+    sha_omi: "sha256:2e0813ee3f2a71028f071d9933ca2f336faaaf9b6126d5f1767ffcbc7e803279"
+    # scx version
+    deb_name_scx: "scx-1.6.8-1.ssl_110.ulinux.x64.deb"
+    deb_ver_scx_regx: "[0-9].[0-9].[0-9]-[0-9]"
+    sha_scx: "sha256:1cba16e3b307177cbe15bd3fd8a2a87ab8d638846988202be8a17981b5e900c9"
 
   tasks:
 
-    - name: system setup
+    - name: "system setup"
       block:
-        - name: test
+        - name: "root capture the flag file"
           ansible.builtin.copy:
             dest: "/root/ctf.txt"
             mode: 0600
@@ -44,9 +53,9 @@
             group:  "root"
             content: |
               # -- ansible manged file --
-              A secret file.
+              A root owned file.
           become: true
-        - name: create common folders
+        - name: "create common folders"
           ansible.builtin.file:
             path: "{{ item.dir }}"
             state: directory
@@ -55,60 +64,86 @@
             group: "{{ item.group }}"
           become: true
           with_items: "{{ create_folders }}"
-        - name: packages
+        - name: "sort packages"
           block:
-            - name: install packages
+            - name: "install packages"
               ansible.builtin.package:
                 name: "{{ item.add_item }}"
                 state: present
               retries: 3
               with_items: "{{ package_install }}"
-            - name: remove packages
+            - name: "remove packages"
               ansible.builtin.package:
                 name: "{{ item.del_item }}"
                 state: absent
               with_items: "{{ package_remove }}"
       become: true
 
-    - name: download known vulnerable source deb
+    - name: "download known vulnerable source deb"
       block:
-        - name: get omi
+        - name: "omi version number:"
+          debug:
+            msg: "{{ deb_name_omi | regex_search(deb_ver_omi_regx) }}"
+        - name: "scx version number:"
+          debug:
+            msg: "{{ deb_name_scx | regex_search(deb_ver_scx_regx) }}"
+        - name: "get omi"
           get_url:
-            url: https://github.com/microsoft/omi/releases/download/v1.6.8-0/omi-1.6.8-0.ssl_110.ulinux.x64.deb
-            dest: /home/vagrant/source/omi-1.6.8-0.ssl_110.ulinux.x64.deb
-            checksum: sha256:2e0813ee3f2a71028f071d9933ca2f336faaaf9b6126d5f1767ffcbc7e803279
-        - name: get scx
+            url: "https://github.com/microsoft/omi/releases/download/v{{ deb_name_omi | regex_search(deb_ver_omi_regx) }}/{{ deb_name_omi }}"
+            dest: "{{ source_dir }}{{ deb_name_omi }}"
+            checksum: "{{ sha_omi }}"
+        - name: "get scx"
           get_url:
-            url: https://github.com/microsoft/SCXcore/releases/download/v1.6.8-1/scx-1.6.8-1.ssl_110.ulinux.x64.deb
-            dest: /home/vagrant/source/scx-1.6.8-1.ssl_110.ulinux.x64.deb
-            checksum: sha256:1cba16e3b307177cbe15bd3fd8a2a87ab8d638846988202be8a17981b5e900c9
+            url: "https://github.com/microsoft/SCXcore/releases/download/v{{ deb_name_scx | regex_search(deb_ver_scx_regx) }}/{{ deb_name_scx }}"
+            dest: "{{ source_dir }}{{ deb_name_scx }}"
+            checksum: "{{ sha_scx }}"
 
-    - name: install software
+    - name: "install software"
       block:
-        - name: install omi
+        - name: "install omi"
           apt:
-            deb: /home/vagrant/source/omi-1.6.8-0.ssl_110.ulinux.x64.deb
+            deb: "{{ source_dir }}{{ deb_name_omi }}"
           become: true
         - name: config omi port
           ansible.builtin.lineinfile:
             path: /etc/opt/omi/conf/omiserver.conf
             regexp: '^httpsport=0'
             line: httpsport=5986
+          register: omi_server_conf
           become: true
-        - name: install scx
+        - name: "install scx"
           apt:
-            deb: /home/vagrant/source/scx-1.6.8-1.ssl_110.ulinux.x64.deb
+            deb: "{{ source_dir }}{{ deb_name_scx }}"
           become: true
+        - name: "test omi script"
+          ansible.builtin.copy:
+            dest: "/home/vagrant/omicli_test.sh"
+            mode: 0755
+            content: |
+              #!/bin/bash
+              echo -e 'running omicli test command: \n'
+              /opt/omi/bin/omicli iv root/scx { SCX_OperatingSystem } ExecuteShellCommand { command 'uptime' timeout 0 }
 
-    - name: start omi daemon
+
+    - name: "start omi daemon"
       block:
-        - name: omi config
+        - name: "systemd reload"
           ansible.builtin.service:
             name: omid
             enabled: yes
             state: reloaded
+          when: omi_server_conf.changed
           become: true
 
-    - name: done
+    - name: "misc setup"
+      ansible.builtin.copy:
+        dest: /home/vagrant/run-playbook.sh
+        mode: 0755
+        content: |
+          export ANSIBLE_PYTHON_INTERPRETER=/usr/bin/python3
+          ansible-playbook -v --connection=local -i "127.0.0.1," -- /vagrant/playbook.yml;
+
+
+    - name: "done"
       debug:
         msg: "omi lab playbook finished."

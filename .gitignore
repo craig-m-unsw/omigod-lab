@@ -1,11 +1,14 @@
 # folders
-.vagrant
-omigod-env
+.vagrant/
+omigod-env/
+local/
+#
 # files
 *.deb
 *.log
 *.py
 *.pyc
+#
 # macos
 .DS_Store?
 .AppleDouble

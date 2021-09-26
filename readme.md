@@ -6,10 +6,6 @@ Disclosure (original research): https://www.wiz.io/blog/omigod-critical-vulnerab
 
 OMI source code: https://github.com/microsoft/omi
 
-Public exploit code:
-* https://github.com/horizon3ai/CVE-2021-38647
-* https://github.com/Immersive-Labs-Sec/cve-2021-38647
-
 news:
 * https://nakedsecurity.sophos.com/2021/09/16/omigod-an-exploitable-hole-in-microsoft-open-source-code/
 * https://www.zdnet.com/article/omigod-azure-users-running-linux-vms-need-to-update-now/
@@ -23,12 +19,11 @@ Read some of the above before proceeding.
 ## Setup
 
 * Install [Vagrant](https://www.vagrantup.com/)
-* Install a [supported hypervisor](https://app.vagrantup.com/generic/boxes/ubuntu2004) for your VM
+* Install a [supported hypervisor](https://app.vagrantup.com/generic/boxes/ubuntu2004)
 
 ```shell
 vagrant up
 vagrant ssh
-/opt/omi/bin/omicli iv root/scx { SCX_OperatingSystem } ExecuteShellCommand { command 'uptime' timeout 0 }
 ```
 
 This will setup Ubuntu 20.04 (Focal Fossa). Thanks [Roboxes](https://roboxes.org/) for the Vagrant box.
@@ -43,6 +38,12 @@ Don't put this VM on the internet :-)
 ## Exploiting
 
 Thanks to vagrant a port forward on localhost:5986 to 5986 in the VM will be open after bring the box up. We have a lab VM to test with now.
+
+#### CVE-2021-38647
+
+Public exploit code:
+* https://github.com/horizon3ai/CVE-2021-38647
+* https://github.com/Immersive-Labs-Sec/cve-2021-38647
 
 To run the exploit from your desktop or inside the VM after reading `omigod.py`, this is why the git commands checkout a set commit! Do not run unknown random exploit code.
 
