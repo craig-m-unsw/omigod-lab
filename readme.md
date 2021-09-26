@@ -22,13 +22,15 @@ Read some of the above before proceeding.
 * Install a [supported hypervisor](https://app.vagrantup.com/generic/boxes/ubuntu2004)
 
 ```shell
+git clone https://github.com/craig-m-unsw/omigod-lab.git
+cd omigod-lab
 vagrant up
 vagrant ssh
 ```
 
 This will setup Ubuntu 20.04 (Focal Fossa). Thanks [Roboxes](https://roboxes.org/) for the Vagrant box.
 
-Installed by `playbook.yml`:
+Installed by Ansible `playbook.yml`:
 
 * omi-1.6.8-0.ssl_110.ulinux.x64.deb - `sha256:2e0813ee3f2a71028f071d9933ca2f336faaaf9b6126d5f1767ffcbc7e803279`
 * scx-1.6.8-1.ssl_110.ulinux.x64.deb - `sha256:1cba16e3b307177cbe15bd3fd8a2a87ab8d638846988202be8a17981b5e900c9`
@@ -58,13 +60,9 @@ python3 -m pip install requests urllib3
 python3 omigod.py -t 127.0.0.1 -c hostname
 ```
 
-You should see `ubuntu2004.localdomain` as the output the the hostname command. 
+You should see `ubuntu2004.localdomain` as the output the the hostname command.
 
-Or if you run `id` command you can see:
-
-```
-uid=0(root) gid=0(root) groups=0(root)
-```
+Or if you run `id` you can see `uid=0(root) gid=0(root) groups=0(root)` outputs.
 
 😬
 

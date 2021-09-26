@@ -43,6 +43,11 @@
 
   tasks:
 
+    - name: "tests"
+      block:
+        - name: "os type check"
+          assert: { that: "ansible_os_family == 'Debian'" }
+
     - name: "system setup"
       block:
         - name: "root capture the flag file"
@@ -124,7 +129,6 @@
               echo -e 'running omicli test command: \n'
               /opt/omi/bin/omicli iv root/scx { SCX_OperatingSystem } ExecuteShellCommand { command 'uptime' timeout 0 }
 
-
     - name: "start omi daemon"
       block:
         - name: "systemd reload"
@@ -143,6 +147,17 @@
           export ANSIBLE_PYTHON_INTERPRETER=/usr/bin/python3
           ansible-playbook -v --connection=local -i "127.0.0.1," -- /vagrant/playbook.yml;
 
+    - name: "test omi agent version"
+      block:
+        - name: "run omi"
+          command:
+            cmd: /opt/omi/bin/omiagent --version
+          changed_when: false
+          register: omiagen_cmd_result
+        - name: "check command output"
+          assert:
+            that:
+              - "'OMI-{{ deb_name_omi | regex_search(deb_ver_omi_regx) }}' in omiagen_cmd_result.stdout"
 
     - name: "done"
       debug:
