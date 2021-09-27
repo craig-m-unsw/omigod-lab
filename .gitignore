@@ -1,12 +1,10 @@
 # folders
 .vagrant/
-omigod-env/
 local/
 #
 # files
 *.deb
 *.log
-*.py
 *.pyc
 #
 # macos
